@@ -10,7 +10,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from utils import prRed, prYellow, prGreen
 
 
-# fix voluntary_self_identification, compare answer if different change the answer, end problem function
 class Linkedin:
     qa_dict = {}
 
