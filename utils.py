@@ -1,4 +1,4 @@
-import csv, math, sqlite3, time, config
+import csv, math, sqlite3, time, config, os
 from typing import List
 from selenium import webdriver
 
@@ -277,10 +277,13 @@ def get_db_filename():
 
 
 def init_db():
-    conn = sqlite3.connect(get_db_filename())
+    db_filename = get_db_filename()
+    if not os.path.exists(db_filename):
+        os.makedirs(os.path.dirname(db_filename), exist_ok=True)
+    conn = sqlite3.connect(db_filename)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS history 
-                 (url TEXT PRIMARY KEY)''')
+                     (url TEXT PRIMARY KEY)''')
     conn.commit()
     conn.close()
 
