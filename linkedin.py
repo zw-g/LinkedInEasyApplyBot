@@ -53,15 +53,11 @@ class Linkedin:
             prRed("❌ Couldn't generate url, make sure you have /data folder and modified config.py file for your preferences.")
 
     def linkJobApply(self):
-        # Generate the URL for job search
         self.generateUrls()
 
-        # Count_job if total jobs
-        # Count_applied is total applied jobs
         count_applied = 0
         count_jobs = 0
 
-        # Read the url
         url_data = utils.getUrlDataFile()
 
         for url in url_data:
@@ -90,33 +86,30 @@ class Linkedin:
                     offer_ids.append(int(offer_id.split(":")[-1]))
 
                 for jobID in offer_ids:
-                    # Job page
                     offer_page = 'https://www.linkedin.com/jobs/view/' + str(jobID)
 
                     if utils.check_applied(offer_page):
-                        for _ in range(3):  # try up to 3 times
+                        for _ in range(3):
                             try:
                                 self.driver.get(offer_page)
-                                break  # if successful, break out of the loop
+                                break
                             except Exception as e:
                                 print(e)
-                        else:  # if we've exhausted all retries
+                        else:
                             raise Exception(f"Failed to load page {offer_page} after 3 attempts")
                         time.sleep(random.uniform(1, config.botSpeed))
 
                         count_jobs += 1
 
-                        # Job info gather and check Blacklisted
                         job_properties = self.getJobProperties()
                         if "blacklisted" in job_properties:
-                            line_to_write = job_properties + " | " + "* 🤬 Blacklisted Job skipped,: " + str(offer_page)
+                            line_to_write = job_properties + "," + "* 🤬 Blacklisted Job skipped," + str(offer_page)
                             utils.write_applied_URL(offer_page)
                             self.displayWriteResults(line_to_write)
 
                         else:
                             button = self.easyApplyButton()
 
-                            # Applies for job
                             if button is not False:
                                 button.click()
                                 time.sleep(random.uniform(1, config.botSpeed))
@@ -141,7 +134,6 @@ class Linkedin:
                                         com_percentage = self.driver.find_element(By.XPATH, 'html/body/div[3]/div/div/div[2]/div/div/span').text
                                         percen_number = int(com_percentage[0:com_percentage.index("%")])
 
-                                        # turn page and apply
                                         result = self.applyProcess(percen_number, offer_page)
                                         line_to_write = job_properties + "," + result
                                         self.displayWriteResults(line_to_write)
@@ -168,8 +160,7 @@ class Linkedin:
 
     def getJobProperties(self):
         try:
-            job_title = self.driver.find_element(By.XPATH, "//h1[contains(@class, 'job-title')]").get_attribute(
-                "innerHTML").strip().replace(",", "")
+            job_title = self.driver.find_element(By.XPATH, "//h1[contains(@class, 'job-title')]").get_attribute("innerHTML").strip().replace(",", "")
             res = [blItem for blItem in config.blackListTitles if (blItem.lower() in job_title.lower())]
             if len(res) > 0:
                 job_title += "(blacklisted title: " + ' '.join(res) + ")"
@@ -179,45 +170,77 @@ class Linkedin:
             job_title = ""
 
         try:
-            job_company = self.driver.find_element(By.XPATH, "//a[contains(@class, 'ember-view t-black t-normal')]").get_attribute(
-                "innerHTML").strip().replace(",", "")
+            job_company = self.driver.find_element(By.XPATH, "//a[contains(@class, 'ember-view t-black t-normal')]").get_attribute("innerHTML").strip().replace(",", "")
             res = [blItem for blItem in config.blacklistCompanies if (blItem.lower() in job_company.lower())]
             if len(res) > 0:
                 job_company += "(blacklisted company: " + ' '.join(res) + ")"
         except Exception as e:
-            if config.displayWarnings:
-                prYellow("⚠️ Warning in getting job_company: " + str(e)[0:50])
-            job_company = ""
+            try:
+                job_info_div = self.driver.find_element(By.XPATH, "//div[@class='jobs-unified-top-card__primary-description']")
+                job_company = job_info_div.find_element(By.XPATH, ".//a[@data-test-app-aware-link]").text.strip().replace(",", "")
+                res = [blItem for blItem in config.blacklistCompanies if (blItem.lower() in job_company.lower())]
+                if len(res) > 0:
+                    job_company += "(blacklisted company: " + ' '.join(res) + ")"
+            except Exception as e:
+                if config.displayWarnings:
+                    prYellow("⚠️ Warning in getting job_company" + str(e)[0:50])
+                job_company = ""
 
         try:
-            job_location = self.driver.find_element(By.XPATH, "//span[contains(@class, 'bullet')]").get_attribute(
-                "innerHTML").strip().replace(",", "")
+            job_location = self.driver.find_element(By.XPATH, "//span[contains(@class, 'bullet')]").get_attribute("innerHTML").strip().replace(",", "")
         except Exception as e:
-            if config.displayWarnings:
-                prYellow("⚠️ Warning in getting job_location: " + str(e)[0:50])
-            job_location = ""
+            try:
+                block_text = self.driver.find_element(By.XPATH, '//*[@class="jobs-unified-top-card__primary-description"]').text
+                location_info = block_text.split("· ")[1]
+                job_location = location_info.split(" (")[0]
+            except Exception as e:
+                if config.displayWarnings:
+                    prYellow("⚠️ Warning in getting job_location: " + str(e)[0:50])
+                job_location = ""
 
         try:
             job_work_place = self.driver.find_element(By.XPATH, "//span[contains(@class, 'workplace-type')]").get_attribute("innerHTML").strip().replace(",", "")
         except Exception as e:
-            if config.displayWarnings:
-                prYellow("⚠️ Warning in getting jobWorkPlace: " + str(e)[0:50])
-            job_work_place = ""
+            try:
+                block_text = self.driver.find_element(By.XPATH, '//*[@class="jobs-unified-top-card__primary-description"]').text
+                location_info = block_text.split("· ")[1]
+                work_type_info = location_info.split(" (")[1]
+                job_work_place = work_type_info.split(")")[0]
+            except Exception as e:
+                if config.displayWarnings:
+                    prYellow("⚠️ Warning in getting jobWorkPlace: " + str(e)[0:50])
+                job_work_place = ""
 
         try:
             job_posted_date = self.driver.find_element(By.XPATH, "//span[contains(@class, 'posted-date')]").get_attribute("innerHTML").strip()
         except Exception as e:
-            if config.displayWarnings:
-                prYellow("⚠️ Warning in getting job_posted_date: " + str(e)[0:50])
-            job_posted_date = ""
+            try:
+                block_text = self.driver.find_element(By.XPATH, '//div[@class="jobs-unified-top-card__primary-description"]').text
+                match = re.search(r'\d+ (\w+ ago)', block_text)
+                if match:
+                    job_posted_date = match.group(0)
+                else:
+                    raise ValueError('No job posted date found')
+            except Exception as e:
+                if config.displayWarnings:
+                    prYellow("⚠️ Warning in getting job_posted_date: " + str(e)[0:50])
+                job_posted_date = ""
 
         try:
-            job_applications = self.driver.find_element(By.XPATH, "//span[contains(@class, 'applicant-count')]").get_attribute(
-                "innerHTML").strip()
+            job_applications = self.driver.find_element(By.XPATH, "//span[contains(@class, 'applicant-count')]").get_attribute("innerHTML").strip()
         except Exception as e:
-            if config.displayWarnings:
-                prYellow("⚠️ Warning in getting job_applications: " + str(e)[0:50])
-            job_applications = ""
+            try:
+                block_text = self.driver.find_element(By.XPATH, '//div[@class="jobs-unified-top-card__primary-description"]').text
+                match = re.search(r'\b\d+\s+applicants?\b', block_text)
+                if match:
+                    job_applications = match.group(0)
+                    print(f'Job applications: {job_applications}')
+                else:
+                    raise ValueError('No job applications found')
+            except Exception as e:
+                if config.displayWarnings:
+                    prYellow("⚠️ Warning in getting job_applications: " + str(e)[0:50])
+                job_applications = ""
 
         formatted_date = datetime.now().strftime('%m/%d/%Y')
 
@@ -251,7 +274,6 @@ class Linkedin:
     def applyProcess(self, percentage, offer_page):
         apply_pages = math.floor(100 / percentage)
         try:
-            # turn pages
             for pages in range(apply_pages - 2):
                 self.handelQuestions()
                 self.driver.find_element(By.CSS_SELECTOR, "button[aria-label='Continue to next step']").click()
@@ -303,38 +325,27 @@ class Linkedin:
 
     def voluntary_self_identification(self):
         try:
-            self.driver.find_element(By.XPATH, '//label[@data-test-text-selectable-option__label="Male"]').click()
+            self.driver.find_element(By.XPATH, f'//label[@data-test-text-selectable-option__label="{config.gender}"]').click()
             time.sleep(random.uniform(1, config.botSpeed))
 
-            # First, find the select element
             select_element = self.driver.find_element(By.CSS_SELECTOR, "select[data-test-text-entity-list-form-select]")
-            # Create a Select object
             select = Select(select_element)
-            # Select the option by visible text
-            select.select_by_visible_text("Asian, not Hispanic or Latino")
+            select.select_by_visible_text(config.raceEthnicity)
             time.sleep(random.uniform(1, config.botSpeed))
 
-            self.driver.find_element(By.XPATH,
-                                     '//label[@data-test-text-selectable-option__label="I am not a protected veteran"]').click()
+            self.driver.find_element(By.XPATH, f'//label[@data-test-text-selectable-option__label="{config.veteranStatus}"]').click()
             time.sleep(random.uniform(1, config.botSpeed))
 
-            self.driver.find_element(By.XPATH,
-                                     '//label[@data-test-text-selectable-option__label="No, I Don\'t Have A Disability, Or A History/Record Of Having A Disability"]').click()
+            self.driver.find_element(By.XPATH, '//label[@data-test-text-selectable-option__label="No, I Don\'t Have A Disability, Or A History/Record Of Having A Disability"]').click()
             time.sleep(random.uniform(1, config.botSpeed))
 
-            # First, find the div element
             div_element = self.driver.find_element(By.XPATH, '//div[@class="artdeco-text-input--container ember-view"]')
-            # Then find the corresponding input element which is the child of the div
             input_element = div_element.find_element(By.XPATH, './input')
-            # Enter the text into the input field
-            input_element.send_keys("Zhaowei Gu")
+            input_element.send_keys(config.legalName)
             time.sleep(random.uniform(1, config.botSpeed))
 
-            # Today's date in "mm/dd/yyyy" format
             today = date.today().strftime("%m/%d/%Y")
-            # Find the date input element
             date_input_element = self.driver.find_element(By.XPATH, '//input[@name="artdeco-date"]')
-            # Enter today's date into the date input field
             date_input_element.send_keys(today)
             time.sleep(random.uniform(1, config.botSpeed))
         except:
@@ -375,14 +386,12 @@ class Linkedin:
             return "", ""
 
     def answerQuestions(self, block, question, q_type):
-        # Create a temporary dictionary with stripped keys
         stripped_qa_dict = {re.sub('---.*?---', '', key): value for key, value in self.qa_dict.items()}
 
         if question in stripped_qa_dict:
             if stripped_qa_dict[question] != "":
                 match q_type.casefold():
                     case "single_line_question":
-                        # for regular
                         try:
                             value = block.find_element(By.CSS_SELECTOR, 'input.artdeco-text-input--input').get_attribute('value')
                             if value:
@@ -396,7 +405,6 @@ class Linkedin:
                                 text_input.send_keys(stripped_qa_dict[question])
                                 time.sleep(random.uniform(1, config.botSpeed))
                         except:
-                            # for city
                             try:
                                 value = block.find_element(By.CSS_SELECTOR, 'input[role="combobox"]').get_attribute('value')
                                 if value:
@@ -410,7 +418,6 @@ class Linkedin:
                                     text_input.send_keys(stripped_qa_dict[question])
                                     time.sleep(random.uniform(1, config.botSpeed))
                             except Exception as e:
-                                #cover letter need to be added
                                 prRed(f"An exception of type {type(e).__name__} occurred. Here are is the location: single_line_question1")
 
                     case "radio_button":
@@ -443,15 +450,10 @@ class Linkedin:
                             select_object = Select(select_element)
                             selected_option = select_object.first_selected_option
 
-                            # 'get_attribute' method can be used to get the text of the option
                             if selected_option.text == "Select an option":
-                                # First find the select element using its data-test attribute
                                 select_element = block.find_element(By.CSS_SELECTOR, 'select[data-test-text-entity-list-form-select=""]')
-                                # Create a Select object
                                 select = Select(select_element)
-                                # Convert the answer to the correct case
                                 answer = stripped_qa_dict[question]
-                                # Select option using visible text
                                 select.select_by_visible_text(answer)
                                 time.sleep(random.uniform(1, config.botSpeed))
                             elif selected_option.text != stripped_qa_dict[question]:
@@ -471,7 +473,6 @@ class Linkedin:
                         entered_value = input_field.get_attribute('value')
                         question_texts = question + "---single_line_question---"
                         self.qa_dict[question_texts] = entered_value
-                        # Save to file
                         utils.add_to_qa_dict(question_texts, self.qa_dict[question_texts])
                     except:
                         try:
@@ -479,7 +480,6 @@ class Linkedin:
                             entered_value = input_field.get_attribute('value')
                             question_texts = question + "---single_line_question---"
                             self.qa_dict[question_texts] = entered_value
-                            # Save to file
                             utils.add_to_qa_dict(question_texts, self.qa_dict[question_texts])
                         except Exception as e:
                             prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: single_line_question2")
@@ -501,7 +501,6 @@ class Linkedin:
                         else:
                             self.qa_dict[question_texts] = ""
 
-                        # Save to file
                         utils.add_to_qa_dict(question_texts, self.qa_dict[question_texts])
                     except Exception as e:
                         prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: radio_button2")
@@ -517,7 +516,6 @@ class Linkedin:
                             self.qa_dict[option_texts] = ""
                         else:
                             self.qa_dict[option_texts] = selected_option.text
-                        # Save to file
                         utils.add_to_qa_dict(option_texts, self.qa_dict[option_texts])
                     except Exception as e:
                         prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: entity_list_question2")

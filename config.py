@@ -3,6 +3,17 @@
 email = ""
 password = ""
 
+# voluntary self identification answer
+# legalName - ex: James Smith
+legalName = ""
+# gender - "Decline To Self Identify", "Female", "Male"
+gender = ""
+# veteranStatus - "I don't wish to answer", "I am not a protected veteran", "I identify as one or more of the classifications of a protected veteran"
+veteranStatus = ""
+# raceEthnicity - "Decline To Self Identify", "Two or More Races", "Native Hawaiian or Other Pacific Islander", "White",
+# "Hispanic or Latino", "Black or African American", "Asian, not Hispanic or Latino", "Asian", "American Indian or Alaskan Native"
+raceEthnicity = ""
+
 # PRO FEATURE - Optional! run browser in headless mode, no browser screen will be shown it will work in background.
 headless = False
 

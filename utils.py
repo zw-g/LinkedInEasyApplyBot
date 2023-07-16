@@ -306,7 +306,6 @@ def check_applied(url):
 
 
 def load_qa_dict():
-    # Load from CSV file
     try:
         with open('questionAnswer.csv', mode='r') as infile:
             reader = csv.reader(infile)
@@ -319,7 +318,6 @@ def load_qa_dict():
 
 
 def add_to_qa_dict(question, answer):
-    # Append to the CSV file
     with open('questionAnswer.csv', 'a') as f:
         writer = csv.writer(f)
         writer.writerow([question, answer])
