@@ -7,8 +7,7 @@ A automated bot that can help you to apply for jobs
 - Make sure Python and pip is installed
 - Install dependencies with `pip3 install -r requirements.yaml`
 - Enter your linkedin credentials on line 3 and 4 of config.py file
-- Either create Chrome Profile and put its path on line 10 of config.py
-- Modify config.py according to your demands.
+- Modify config.py according to your needs.
 - Run `python3 linkedin.py`
 - Check Applied Jobs DATA .txt file is generate under /data folder
 

@@ -11,18 +11,11 @@ def chromeBrowserOptions():
     options.add_argument('--disable-gpu')
     if config.headless:
         options.add_argument("--headless")
-    options.add_argument("--start-maximized")
     options.add_argument("--disable-blink-features")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option('useAutomationExtension', False)
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    if len(config.chromeProfilePath) > 0:
-        initial_path = config.chromeProfilePath[0:config.chromeProfilePath.rfind("/")]
-        profile_dir = config.chromeProfilePath[config.chromeProfilePath.rfind("/") + 1:]
-        options.add_argument('--user-data-dir=' + initial_path)
-        options.add_argument("--profile-directory=" + profile_dir)
-    else:
-        options.add_argument("--incognito")
+    options.add_argument("--incognito")
     return options
 
 

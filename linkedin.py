@@ -1,4 +1,4 @@
-import math, os, random, time, re, config, utils
+import math, os, random, time, re, config, utils, atexit
 
 from datetime import datetime, date
 from selenium import webdriver
@@ -11,11 +11,13 @@ from utils import prRed, prYellow, prGreen
 
 
 class Linkedin:
+    count_applied = 0
+    count_jobs = 0
     qa_dict = {}
 
     def __init__(self):
         prYellow("🌐 Bot will run in Chrome browser and log in Linkedin for you.")
-        self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+        self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=utils.chromeBrowserOptions())
         self.driver.get('https://www.linkedin.com/login')
 
         prYellow("🔄 Trying to log in linkedin...")
@@ -38,6 +40,10 @@ class Linkedin:
 
         self.qa_dict = utils.load_qa_dict()
         utils.init_db()
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        prYellow("applied succeed: " + str(self.count_applied) + " jobs out of " + str(self.count_jobs) + ".")
 
     @staticmethod
     def generateUrls():
@@ -54,9 +60,6 @@ class Linkedin:
 
     def linkJobApply(self):
         self.generateUrls()
-
-        count_applied = 0
-        count_jobs = 0
 
         url_data = utils.getUrlDataFile()
 
@@ -99,7 +102,7 @@ class Linkedin:
                             raise Exception(f"Failed to load page {offer_page} after 3 attempts")
                         time.sleep(random.uniform(1, config.botSpeed))
 
-                        count_jobs += 1
+                        self.count_jobs += 1
 
                         job_properties = self.getJobProperties()
                         if "blacklisted" in job_properties:
@@ -113,7 +116,6 @@ class Linkedin:
                             if button is not False:
                                 button.click()
                                 time.sleep(random.uniform(1, config.botSpeed))
-                                count_applied += 1
                                 try:
                                     self.chooseResume()
                                     self.driver.find_element(By.CSS_SELECTOR,
@@ -121,6 +123,7 @@ class Linkedin:
                                     time.sleep(random.uniform(1, config.botSpeed))
 
                                     line_to_write = job_properties + "," + "* 🥳 Apply Success," + str(offer_page)
+                                    self.count_applied += 1
                                     utils.write_applied_URL(offer_page)
                                     self.displayWriteResults(line_to_write)
 
@@ -146,9 +149,6 @@ class Linkedin:
                                 line_to_write = job_properties + "," + "* 🥱 Applied Pass," + str(offer_page)
                                 utils.write_applied_URL(offer_page)
                                 self.displayWriteResults(line_to_write)
-
-            prYellow("Category: " + url_words[0] + "," + url_words[1] + " applied: " + str(count_applied) +
-                     " jobs out of " + str(count_jobs) + ".")
 
     @staticmethod
     def displayWriteResults(line_to_write: str):
@@ -234,7 +234,6 @@ class Linkedin:
                 match = re.search(r'\b\d+\s+applicants?\b', block_text)
                 if match:
                     job_applications = match.group(0)
-                    print(f'Job applications: {job_applications}')
                 else:
                     raise ValueError('No job applications found')
             except Exception as e:
@@ -413,12 +412,19 @@ class Linkedin:
                                         text_input.clear()
                                         text_input.send_keys(stripped_qa_dict[question])
                                         time.sleep(random.uniform(1, config.botSpeed))
+                                        options = self.driver.find_elements(By.CSS_SELECTOR, 'div.basic-typeahead__triggered-content.fb-single-typeahead-entity__triggered-content[role="listbox"] div')
+                                        options[0].click()
+                                        time.sleep(random.uniform(1, config.botSpeed))
                                 else:
                                     text_input = block.find_element(By.CSS_SELECTOR, 'input[role="combobox"]')
                                     text_input.send_keys(stripped_qa_dict[question])
                                     time.sleep(random.uniform(1, config.botSpeed))
+                                    options = self.driver.find_elements(By.CSS_SELECTOR, 'div.basic-typeahead__triggered-content.fb-single-typeahead-entity__triggered-content[role="listbox"] div')
+                                    options[0].click()
+                                    time.sleep(random.uniform(1, config.botSpeed))
                             except Exception as e:
-                                prRed(f"An exception of type {type(e).__name__} occurred. Here are is the location: single_line_question1")
+                                if config.displayWarnings:
+                                    prYellow(f"An exception of type {type(e).__name__} occurred. Here are is the location: single_line_question1")
 
                     case "radio_button":
                         try:
@@ -442,7 +448,8 @@ class Linkedin:
                                 block.find_element(By.XPATH, './/label[@data-test-text-selectable-option__label="No"]').click()
                                 time.sleep(random.uniform(1, config.botSpeed))
                         except Exception as e:
-                            prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: radio_button1")
+                            if config.displayWarnings:
+                                prYellow(f"An exception of type {type(e).__name__} occurred. Here are the is location: radio_button1")
 
                     case "entity_list_question":
                         try:
@@ -463,8 +470,8 @@ class Linkedin:
                                 select.select_by_visible_text(answer)
                                 time.sleep(random.uniform(1, config.botSpeed))
                         except Exception as e:
-                            prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: entity_list_question1")
-
+                            if config.displayWarnings:
+                                prYellow(f"An exception of type {type(e).__name__} occurred. Here are the is location: entity_list_question1")
         else:
             match q_type.casefold():
                 case "single_line_question":
@@ -482,7 +489,8 @@ class Linkedin:
                             self.qa_dict[question_texts] = entered_value
                             utils.add_to_qa_dict(question_texts, self.qa_dict[question_texts])
                         except Exception as e:
-                            prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: single_line_question2")
+                            if config.displayWarnings:
+                                prYellow(f"An exception of type {type(e).__name__} occurred. Here are the is location: single_line_question2")
 
                 case "radio_button":
                     try:
@@ -503,7 +511,8 @@ class Linkedin:
 
                         utils.add_to_qa_dict(question_texts, self.qa_dict[question_texts])
                     except Exception as e:
-                        prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: radio_button2")
+                        if config.displayWarnings:
+                            prYellow(f"An exception of type {type(e).__name__} occurred. Here are the is location: radio_button2")
 
                 case "entity_list_question":
                     try:
@@ -518,7 +527,8 @@ class Linkedin:
                             self.qa_dict[option_texts] = selected_option.text
                         utils.add_to_qa_dict(option_texts, self.qa_dict[option_texts])
                     except Exception as e:
-                        prRed(f"An exception of type {type(e).__name__} occurred. Here are the is location: entity_list_question2")
+                        if config.displayWarnings:
+                            prYellow(f"An exception of type {type(e).__name__} occurred. Here are the is location: entity_list_question2")
 
 
 start = time.time()

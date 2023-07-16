@@ -17,9 +17,6 @@ raceEthnicity = ""
 # PRO FEATURE - Optional! run browser in headless mode, no browser screen will be shown it will work in background.
 headless = False
 
-# get Chrome profile path by typing following url: chrome://version/ Ex: r"you path here"
-chromeProfilePath = r""
-
 # location you want to search the jobs - ex : ["Poland", "Singapore", "New York City Metropolitan Area", "Monroe County"]
 # continent locations:["Europe", "Asia", "Australia", "NorthAmerica", "SouthAmerica", "Africa", "Australia"]
 location = []
