@@ -97,7 +97,7 @@ class Linkedin:
                                 self.driver.get(offer_page)
                                 break
                             except Exception as e:
-                                print(e)
+                                pass
                         else:
                             raise Exception(f"Failed to load page {offer_page} after 3 attempts")
                         time.sleep(random.uniform(1, config.botSpeed))
@@ -192,7 +192,7 @@ class Linkedin:
             try:
                 block_text = self.driver.find_element(By.XPATH, '//*[@class="jobs-unified-top-card__primary-description"]').text
                 location_info = block_text.split("· ")[1]
-                job_location = location_info.split(" (")[0]
+                job_location = location_info.split(" (")[0].split(" Reposted")[0].replace(",", "")
             except Exception as e:
                 if config.displayWarnings:
                     prYellow("⚠️ Warning in getting job_location: " + str(e)[0:50])
@@ -296,6 +296,7 @@ class Linkedin:
             time.sleep(random.uniform(1, config.botSpeed))
 
             result = "* 🥳 Apply Success," + str(offer_page)
+            self.count_applied += 1
             utils.write_applied_URL(offer_page)
         except:
             result = "* 🥵 Extra info need," + str(offer_page)
@@ -413,14 +414,20 @@ class Linkedin:
                                         text_input.send_keys(stripped_qa_dict[question])
                                         time.sleep(random.uniform(1, config.botSpeed))
                                         options = self.driver.find_elements(By.CSS_SELECTOR, 'div.basic-typeahead__triggered-content.fb-single-typeahead-entity__triggered-content[role="listbox"] div')
-                                        options[0].click()
+                                        for option in options:
+                                            if option.text == stripped_qa_dict[question]:
+                                                option.click()
+                                                break
                                         time.sleep(random.uniform(1, config.botSpeed))
                                 else:
                                     text_input = block.find_element(By.CSS_SELECTOR, 'input[role="combobox"]')
                                     text_input.send_keys(stripped_qa_dict[question])
                                     time.sleep(random.uniform(1, config.botSpeed))
                                     options = self.driver.find_elements(By.CSS_SELECTOR, 'div.basic-typeahead__triggered-content.fb-single-typeahead-entity__triggered-content[role="listbox"] div')
-                                    options[0].click()
+                                    for option in options:
+                                        if option.text == stripped_qa_dict[question]:
+                                            option.click()
+                                            break
                                     time.sleep(random.uniform(1, config.botSpeed))
                             except Exception as e:
                                 if config.displayWarnings:
