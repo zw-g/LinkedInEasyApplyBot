@@ -96,7 +96,7 @@ class Linkedin:
                             try:
                                 self.driver.get(offer_page)
                                 break
-                            except Exception as e:
+                            except:
                                 pass
                         else:
                             raise Exception(f"Failed to load page {offer_page} after 3 attempts")
@@ -174,7 +174,7 @@ class Linkedin:
             res = [blItem for blItem in config.blacklistCompanies if (blItem.lower() in job_company.lower())]
             if len(res) > 0:
                 job_company += "(blacklisted company: " + ' '.join(res) + ")"
-        except Exception as e:
+        except:
             try:
                 job_info_div = self.driver.find_element(By.XPATH, "//div[@class='jobs-unified-top-card__primary-description']")
                 job_company = job_info_div.find_element(By.XPATH, ".//a[@data-test-app-aware-link]").text.strip().replace(",", "")
@@ -188,7 +188,7 @@ class Linkedin:
 
         try:
             job_location = self.driver.find_element(By.XPATH, "//span[contains(@class, 'bullet')]").get_attribute("innerHTML").strip().replace(",", "")
-        except Exception as e:
+        except:
             try:
                 block_text = self.driver.find_element(By.XPATH, '//*[@class="jobs-unified-top-card__primary-description"]').text
                 location_info = block_text.split("· ")[1]
@@ -200,7 +200,7 @@ class Linkedin:
 
         try:
             job_work_place = self.driver.find_element(By.XPATH, "//span[contains(@class, 'workplace-type')]").get_attribute("innerHTML").strip().replace(",", "")
-        except Exception as e:
+        except:
             try:
                 block_text = self.driver.find_element(By.XPATH, '//*[@class="jobs-unified-top-card__primary-description"]').text
                 location_info = block_text.split("· ")[1]
@@ -213,7 +213,7 @@ class Linkedin:
 
         try:
             job_posted_date = self.driver.find_element(By.XPATH, "//span[contains(@class, 'posted-date')]").get_attribute("innerHTML").strip()
-        except Exception as e:
+        except:
             try:
                 block_text = self.driver.find_element(By.XPATH, '//div[@class="jobs-unified-top-card__primary-description"]').text
                 match = re.search(r'\d+ (\w+ ago)', block_text)
@@ -228,7 +228,7 @@ class Linkedin:
 
         try:
             job_applications = self.driver.find_element(By.XPATH, "//span[contains(@class, 'applicant-count')]").get_attribute("innerHTML").strip()
-        except Exception as e:
+        except:
             try:
                 block_text = self.driver.find_element(By.XPATH, '//div[@class="jobs-unified-top-card__primary-description"]').text
                 match = re.search(r'\b\d+\s+applicants?\b', block_text)

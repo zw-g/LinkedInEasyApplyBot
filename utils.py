@@ -305,7 +305,7 @@ def load_qa_dict():
             qa_dict = {rows[0]: rows[1] for rows in reader}
     except FileNotFoundError:
         qa_dict = {}
-        with open('questionAnswer.csv', mode='w') as outfile:
+        with open('questionAnswer.csv', mode='w'):
             pass
     return qa_dict
 
