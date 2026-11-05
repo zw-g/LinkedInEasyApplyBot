@@ -161,3 +161,8 @@ cython_debug/
 
 # Apple
 .DS_Store
+
+# Bot output: data/ holds urlData.txt, the daily "Applied Jobs DATA" CSVs and
+# <email>_applied_history.db. questionAnswer.csv holds your own answers.
+data/
+questionAnswer.csv
